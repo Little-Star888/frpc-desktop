@@ -35,7 +35,7 @@ import downloadRounded from "@iconify-icons/material-symbols/download-rounded";
 import deviceReset from "@iconify-icons/material-symbols/device-reset";
 import switchAccessOutlineRounded from "@iconify-icons/material-symbols/switch-access-outline-rounded";
 import switchAccessRounded from "@iconify-icons/material-symbols/switch-access-rounded";
-
+import localFireDepartment from "@iconify-icons/material-symbols/local-fire-department";
 addIcon("cloud", Cloud);
 addIcon("rocket-launch-rounded", RocketLaunchRounded);
 addIcon("download", Download);
@@ -65,5 +65,6 @@ addIcon("downloadRounded", downloadRounded);
 addIcon("deviceReset", deviceReset);
 addIcon("switchAccessOutlineRounded", switchAccessOutlineRounded);
 addIcon("switchAccessRounded", switchAccessRounded);
+addIcon("localFireDepartment", localFireDepartment);
 
 

@@ -61,6 +61,17 @@ const routes: RouteRecordRaw[] = [
         component: () => import("@/views/logger/index.vue")
       },
       {
+        path: "/welfare",
+        name: "Welfare",
+        meta: {
+          title: "公益",
+          icon: "localFireDepartment",
+          keepAlive: true,
+          hidden: false
+        },
+        component: () => import("@/views/welfare/index.vue")
+      },
+      {
         path: "/about",
         name: "About",
         meta: {
