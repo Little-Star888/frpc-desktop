@@ -73,6 +73,7 @@ const defaultForm: FrpcProxy = {
   remotePort: "8080",
   customDomains: [""],
   visitorsModel: "visitors",
+  serverUser: "",
   serverName: "",
   secretKey: "",
   bindAddr: "",
@@ -188,6 +189,13 @@ const editFormRules = reactive<FormRules>({
     {
       required: true,
       message: t("proxy.form.formItem.serverName.requireMessage"),
+      trigger: "blur"
+    }
+  ],
+  serverUser: [
+    {
+      required: true,
+      message: t("proxy.form.formItem.serverUser.requireMessage"),
       trigger: "blur"
     }
   ],
@@ -1666,6 +1674,18 @@ onUnmounted(() => {
             </template>
           </template>
           <template v-if="isStcpVisitors">
+            <el-col :span="24">
+              <el-form-item
+                :label="t('proxy.form.formItem.serverUser.label')"
+                prop="serverUser"
+              >
+                <el-input
+                  v-model="editForm.serverUser"
+                  type="text"
+                  :placeholder="t('proxy.form.formItem.serverUser.placeholder')"
+                />
+              </el-form-item>
+            </el-col>
             <el-col :span="24">
               <el-form-item
                 :label="t('proxy.form.formItem.serverName.label')"

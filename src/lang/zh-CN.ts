@@ -510,6 +510,11 @@ export default {
           requireMessage: "请输入提供者代理名称",
           placeholder: "提供者代理名称"
         },
+        serverUser: {
+          label: "服务端用户",
+          requireMessage: "请输入服务端用户",
+          placeholder: "服务端用户"
+        },
         keepTunnelOpen: {
           label: "保持隧道开启",
           requireMessage: "请选择是否保持隧道开启",

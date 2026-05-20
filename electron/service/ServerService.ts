@@ -191,11 +191,11 @@ remotePort = {{ $v.Second }}
           return {
             name: proxy.name,
             type: proxy.type,
-            // serverUser: proxy.serverUser,
             serverName: proxy.serverName,
             secretKey: proxy.secretKey,
             bindAddr: proxy.bindAddr,
             bindPort: proxy.bindPort,
+            ...(proxy.serverUser ? { serverUser: proxy.serverUser } : {}),
             keepTunnelOpen: proxy.keepTunnelOpen,
             fallbackTo: proxy.fallbackTo,
             fallbackTimeoutMs: proxy.fallbackTimeoutMs
@@ -207,7 +207,8 @@ remotePort = {{ $v.Second }}
             serverName: proxy.serverName,
             secretKey: proxy.secretKey,
             bindAddr: proxy.bindAddr,
-            bindPort: proxy.bindPort
+            bindPort: proxy.bindPort,
+            ...(proxy.serverUser ? { serverUser: proxy.serverUser } : {})
           };
         }
       });
@@ -546,6 +547,7 @@ ${f}`;
               remotePort: "8080",
               customDomains: [""],
               visitorsModel: "visitors",
+              serverUser: "",
               serverName: "",
               secretKey: "",
               bindAddr: "",
@@ -604,6 +606,9 @@ ${f}`;
             if (proxy.serverName !== undefined) {
               proxy2.serverName = proxy.serverName as string;
             }
+            if (proxy.serverUser !== undefined) {
+              proxy2.serverUser = proxy.serverUser as string;
+            }
             if (proxy.secretKey !== undefined) {
               proxy2.secretKey = proxy.secretKey as string;
             }
@@ -658,6 +663,7 @@ ${f}`;
                 remotePort: "8080",
                 customDomains: [""],
                 visitorsModel: "visitors",
+                serverUser: "",
                 serverName: "",
                 secretKey: "",
                 bindAddr: "",
@@ -688,6 +694,9 @@ ${f}`;
               }
               if (visitor.serverName !== undefined) {
                 visitor2.serverName = visitor.serverName as string;
+              }
+              if (visitor.serverUser !== undefined) {
+                visitor2.serverUser = visitor.serverUser as string;
               }
               if (visitor.secretKey !== undefined) {
                 visitor2.secretKey = visitor.secretKey as string;

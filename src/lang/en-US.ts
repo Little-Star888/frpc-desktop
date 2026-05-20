@@ -487,6 +487,11 @@ export default {
           requireMessage: "Please enter provider proxy name",
           placeholder: "stcp provider proxy name"
         },
+        serverUser: {
+          label: "Server User",
+          requireMessage: "Please enter server user",
+          placeholder: "Server user"
+        },
         keepTunnelOpen: {
           label: "Keep Tunnel Open",
           requireMessage: "Please select whether to keep tunnel open",

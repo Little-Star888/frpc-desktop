@@ -29,6 +29,8 @@ const FRPC_SUCCESS_PATTERNS = [
   "start proxy success",
   "proxy added success"
 ];
+const DISCONNECT_NOTIFICATION_COOLDOWN_MS = 60 * 1000;
+const FRPC_RECOVERY_COOLDOWN_MS = 10 * 1000;
 
 class FrpcProcessService {
   private readonly _serverService: ServerService;
@@ -38,6 +40,8 @@ class FrpcProcessService {
   private _frpcProcessListener: any;
   private _frpcLastStartTime: number = -1;
   private _notification: number = -1;
+  private _frpcRecoveryChecking = false;
+  private _frpcLastRecoveryTime = -1;
 
   constructor() {
     this._serverService = BeanFactory.getBean("serverService");
@@ -197,7 +201,10 @@ class FrpcProcessService {
       const fd = fs.openSync(logPath, "r");
       fs.readSync(fd, buf, 0, readSize, stat.size - readSize);
       fs.closeSync(fd);
-      const lines = buf.toString("utf-8").split("\n").filter(l => l.trim());
+      const lines = buf
+        .toString("utf-8")
+        .split("\n")
+        .filter(l => l.trim());
       for (let i = lines.length - 1; i >= 0; i--) {
         const line = lines[i];
         if (FRPC_SUCCESS_PATTERNS.some(p => line.includes(p))) {
@@ -335,6 +342,8 @@ class FrpcProcessService {
       command = `./${PathUtils.getFrpcFilename()} -c "${configPath}"`;
     }
 
+    let frpcStdout = "";
+    let frpcStderr = "";
     this._frpcProcess = spawn(command, {
       cwd: version.localPath,
       shell: true
@@ -346,11 +355,38 @@ class FrpcProcessService {
     );
 
     this._frpcProcess.stdout.on("data", data => {
-      Logger.debug(`FrpcProcessService.startFrpcProcess`, `stdout: ${data}`);
+      const message = data.toString();
+      frpcStdout += message;
+      Logger.debug(`FrpcProcessService.startFrpcProcess`, `stdout: ${message}`);
     });
 
     this._frpcProcess.stderr.on("data", data => {
-      Logger.debug(`FrpcProcessService.startFrpcProcess`, `stderr: ${data}`);
+      const message = data.toString();
+      frpcStderr += message;
+      Logger.warn(`FrpcProcessService.startFrpcProcess`, `stderr: ${message}`);
+    });
+
+    this._frpcProcess.on("error", error => {
+      Logger.error(`FrpcProcessService.startFrpcProcess`, error);
+    });
+
+    this._frpcProcess.on("exit", (code, signal) => {
+      const exitMessage = [
+        `frpc exited, code=${code}, signal=${signal}`,
+        frpcStderr.trim() ? `stderr: ${frpcStderr.trim()}` : "",
+        frpcStdout.trim() ? `stdout: ${frpcStdout.trim()}` : ""
+      ]
+        .filter(Boolean)
+        .join("\n");
+      if (code && code !== 0) {
+        Logger.error(
+          `FrpcProcessService.startFrpcProcess`,
+          new Error(exitMessage)
+        );
+      } else {
+        Logger.warn(`FrpcProcessService.startFrpcProcess`, exitMessage);
+      }
+      this._frpcProcess = null;
     });
   }
 
@@ -381,6 +417,8 @@ class FrpcProcessService {
         this._frpcProcess = null;
         this._frpcLastStartTime = -1;
         this._notification = -1;
+        this._frpcRecoveryChecking = false;
+        this._frpcLastRecoveryTime = -1;
         return;
       }
 
@@ -396,6 +434,8 @@ class FrpcProcessService {
           this._frpcProcess = null;
           this._frpcLastStartTime = -1;
           this._notification = -1;
+          this._frpcRecoveryChecking = false;
+          this._frpcLastRecoveryTime = -1;
         }
       });
     }
@@ -460,21 +500,41 @@ class FrpcProcessService {
       `Guardian started, interval=${GlobalConstant.FRPC_PROCESS_STATUS_CHECK_INTERVAL}s`
     );
     setInterval(async () => {
+      if (this._frpcRecoveryChecking) {
+        return;
+      }
       const running = this.isRunning();
       if (!running && this._frpcLastStartTime !== -1) {
-        const netStatus = await this._systemService.checkInternetConnect();
-        if (netStatus) {
-          this.startFrpcProcess().then(() => {
+        const now = Date.now();
+        if (
+          this._frpcLastRecoveryTime !== -1 &&
+          now - this._frpcLastRecoveryTime < FRPC_RECOVERY_COOLDOWN_MS
+        ) {
+          return;
+        }
+        this._frpcRecoveryChecking = true;
+        this._frpcLastRecoveryTime = now;
+        try {
+          const netStatus = await this._systemService.checkInternetConnect();
+          if (netStatus) {
+            await this.startFrpcProcess();
             Logger.info(
               `FrpcProcessService.frpcProcessGuardian`,
               `Network restored, frpc process restarted.`
             );
-          });
-        } else {
-          Logger.warn(
+          } else {
+            Logger.warn(
+              `FrpcProcessService.frpcProcessGuardian`,
+              `frpc is not running and network is unreachable, waiting for recovery.`
+            );
+          }
+        } catch (error) {
+          Logger.error(
             `FrpcProcessService.frpcProcessGuardian`,
-            `frpc is not running and network is unreachable, waiting for recovery.`
+            error as Error
           );
+        } finally {
+          this._frpcRecoveryChecking = false;
         }
       }
     }, GlobalConstant.FRPC_PROCESS_STATUS_CHECK_INTERVAL * 1000);
@@ -484,10 +544,11 @@ class FrpcProcessService {
     this._frpcProcessListener = setInterval(() => {
       const running = this.isRunning();
       if (!running) {
-        if (
-          this._frpcLastStartTime !== -1 &&
-          this._notification !== this._frpcLastStartTime
-        ) {
+        const now = Date.now();
+        const canNotify =
+          this._notification === -1 ||
+          now - this._notification >= DISCONNECT_NOTIFICATION_COOLDOWN_MS;
+        if (this._frpcLastStartTime !== -1 && canNotify) {
           Logger.warn(
             `FrpcProcessService.watchFrpcProcess`,
             `frpc process exited unexpectedly (lastStartTime=${this._frpcLastStartTime})`
@@ -496,8 +557,10 @@ class FrpcProcessService {
             title: app.getName(),
             body: "Connection lost, please check the logs for details."
           }).show();
-          this._notification = this._frpcLastStartTime;
+          this._notification = now;
         }
+      } else {
+        this._notification = -1;
       }
       const connectionError = running ? this.readFrpcConnectionError() : null;
       const win: BrowserWindow = BeanFactory.getBean("win");

@@ -70,6 +70,7 @@ interface FrpcProxyConfig {
   locations: string[];
   hostHeaderRewrite: string;
   visitorsModel: string;
+  serverUser: string;
   serverName: string;
   secretKey: string;
   bindAddr: string;

@@ -117,7 +117,7 @@ class SystemService {
     return new Promise(resolve => {
       const request = net.request({
         method: "get",
-        url: ``
+        url: GlobalConstant.INTERNET_CHECK_URL
       });
       const timeout = setTimeout(() => {
         request.abort();
