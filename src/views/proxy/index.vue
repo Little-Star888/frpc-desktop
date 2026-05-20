@@ -24,6 +24,9 @@ defineComponent({
 
 const { t } = useI18n();
 
+const hostPattern =
+  /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}|localhost|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$/;
+
 const proxys = ref<Array<FrpcProxy>>([]);
 const searchKeyword = ref("");
 const filteredProxys = computed(() => {
@@ -135,7 +138,7 @@ const editFormRules = reactive<FormRules>({
       trigger: "blur"
     },
     {
-      pattern: /^[\w-]+(\.[\w-]+)+$/,
+      pattern: hostPattern,
       message: t("proxy.form.formItem.localIP.patternMessage"),
       trigger: "blur"
     }
@@ -194,7 +197,7 @@ const editFormRules = reactive<FormRules>({
       trigger: "blur"
     },
     {
-      pattern: /^[\w-]+(\.[\w-]+)+$/,
+      pattern: hostPattern,
       message: t("proxy.form.formItem.bindAddr.patternMessage"),
       trigger: "blur"
     }

@@ -396,7 +396,8 @@ export default {
         },
         localIP: {
           label: "Local IP",
-          requireMessage: "Please enter local IP"
+          requireMessage: "Please enter local IP",
+          patternMessage: "Please enter a valid local address"
         },
         localPort: {
           label: "Local Port",
