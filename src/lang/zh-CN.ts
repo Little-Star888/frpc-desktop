@@ -513,7 +513,9 @@ export default {
         serverUser: {
           label: "服务端用户",
           requireMessage: "请输入服务端用户",
-          placeholder: "服务端用户"
+          placeholder: "服务端用户",
+          description:
+            "访问其他用户创建的提供者代理时填写；留空则默认访问当前服务端用户的代理。"
         },
         keepTunnelOpen: {
           label: "保持隧道开启",

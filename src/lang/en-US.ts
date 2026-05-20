@@ -490,7 +490,9 @@ export default {
         serverUser: {
           label: "Server User",
           requireMessage: "Please enter server user",
-          placeholder: "Server user"
+          placeholder: "Server user",
+          description:
+            "Fill this when visiting a provider proxy created by another server user. Leave it empty to use the current server user."
         },
         keepTunnelOpen: {
           label: "Keep Tunnel Open",

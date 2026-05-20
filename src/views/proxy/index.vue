@@ -192,13 +192,6 @@ const editFormRules = reactive<FormRules>({
       trigger: "blur"
     }
   ],
-  serverUser: [
-    {
-      required: true,
-      message: t("proxy.form.formItem.serverUser.requireMessage"),
-      trigger: "blur"
-    }
-  ],
   bindAddr: [
     {
       required: true,
@@ -1679,6 +1672,33 @@ onUnmounted(() => {
                 :label="t('proxy.form.formItem.serverUser.label')"
                 prop="serverUser"
               >
+                <template #label>
+                  <div class="inline-block">
+                    <div class="flex items-center">
+                      <div class="mr-1">
+                        <el-popover placement="top" trigger="hover" width="300">
+                          <template #default>
+                            {{ t("common.frpParameter") }}:
+                            <span class="font-black text-[#5A3DAA]"
+                              >serverUser</span
+                            >
+                            {{
+                              t("proxy.form.formItem.serverUser.description")
+                            }}
+                          </template>
+                          <template #reference>
+                            <IconifyIconOffline
+                              class="text-base"
+                              color="#5A3DAA"
+                              icon="info"
+                            />
+                          </template>
+                        </el-popover>
+                      </div>
+                      {{ t("proxy.form.formItem.serverUser.label") }}
+                    </div>
+                  </div>
+                </template>
                 <el-input
                   v-model="editForm.serverUser"
                   type="text"
