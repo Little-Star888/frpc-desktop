@@ -479,10 +479,10 @@ const handleOpenUpdate = (proxy: FrpcProxy) => {
   };
 };
 
-const handleReversalUpdate = (proxy: FrpcProxy) => {
+const handleProxyStatusChange = (proxy: FrpcProxy) => {
   send(ipcRouters.PROXY.modifyProxyStatus, {
     id: proxy._id,
-    status: proxy.status === 1 ? 0 : 1
+    status: proxy.status
   });
 };
 
@@ -938,6 +938,16 @@ onUnmounted(() => {
 
               <div class="right">
                 <div class="flex flex-col gap-1 items-center">
+                  <el-switch
+                    v-model="proxy.status"
+                    :active-text="t('common.enable')"
+                    :active-value="1"
+                    :inactive-text="t('common.disable')"
+                    :inactive-value="0"
+                    :width="70"
+                    inline-prompt
+                    @change="handleProxyStatusChange(proxy)"
+                  />
                   <el-button
                     type="text"
                     size="small"
@@ -957,17 +967,6 @@ onUnmounted(() => {
                     </el-button>
                     <template #dropdown>
                       <el-dropdown-menu>
-                        <el-dropdown-item @click="handleReversalUpdate(proxy)">
-                          <IconifyIconOffline
-                            class="mr-1"
-                            :icon="!proxy.status ? 'toggle-on' : 'toggle-off'"
-                          />
-                          {{
-                            proxy.status
-                              ? t("common.disable")
-                              : t("common.enable")
-                          }}
-                        </el-dropdown-item>
                         <el-dropdown-item @click="handleDeleteProxy(proxy)">
                           <IconifyIconOffline
                             class="mr-1"
@@ -1043,16 +1042,16 @@ onUnmounted(() => {
           </el-table-column>
           <el-table-column :label="t('common.status')" width="100">
             <template #default="scope">
-              <el-tag
-                :type="scope.row.status === 0 ? 'danger' : 'success'"
-                size="small"
-              >
-                {{
-                  scope.row.status === 0
-                    ? t("common.disabled")
-                    : t("common.enabled")
-                }}
-              </el-tag>
+              <el-switch
+                v-model="scope.row.status"
+                :active-text="t('common.enable')"
+                :active-value="1"
+                :inactive-text="t('common.disable')"
+                :inactive-value="0"
+                :width="70"
+                inline-prompt
+                @change="handleProxyStatusChange(scope.row)"
+              />
             </template>
           </el-table-column>
           <el-table-column
@@ -1083,19 +1082,6 @@ onUnmounted(() => {
                   </el-button>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item
-                        @click="handleReversalUpdate(scope.row)"
-                      >
-                        <IconifyIconOffline
-                          class="mr-1"
-                          :icon="!scope.row.status ? 'toggle-on' : 'toggle-off'"
-                        />
-                        {{
-                          scope.row.status
-                            ? t("common.disable")
-                            : t("common.enable")
-                        }}
-                      </el-dropdown-item>
                       <el-dropdown-item @click="handleDeleteProxy(scope.row)">
                         <IconifyIconOffline
                           class="mr-1"
