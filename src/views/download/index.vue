@@ -20,6 +20,7 @@ const versions = ref<Array<FrpcVersion>>([]);
 const loading = ref(1);
 const downloadPercentage = ref(0);
 const downloading = ref<Map<number, number>>(new Map<number, number>());
+const viewMode = ref<"card" | "list">("card");
 const currMirror = ref("github");
 const mirrors = ref<Array<GitHubMirror>>([
   {
@@ -79,6 +80,14 @@ const handleDeleteVersion = useDebounceFn((version: FrpcVersion) => {
 
 const handleMirrorChange = () => {
   handleLoadAllVersions();
+};
+
+const isVersionDownloading = (version: FrpcVersion) => {
+  return downloading.value.has(version.githubReleaseId);
+};
+
+const getDownloadProgress = (version: FrpcVersion) => {
+  return downloading.value.get(version.githubReleaseId) ?? 0;
 };
 
 onMounted(() => {
@@ -181,7 +190,17 @@ onUnmounted(() => {
 <template>
   <div class="main">
     <breadcrumb>
-      <div class="flex">
+      <div class="flex items-center">
+        <el-radio-group v-model="viewMode" class="mr-2">
+          <el-radio-button value="card">
+            <IconifyIconOffline class="mr-1" icon="dashboard" />
+            {{ t("download.viewMode.card") }}
+          </el-radio-button>
+          <el-radio-button value="list">
+            <IconifyIconOffline class="mr-1" icon="table-rows" />
+            {{ t("download.viewMode.list") }}
+          </el-radio-button>
+        </el-radio-group>
         <el-button type="primary" @click="handleImportFrp">
           <template #icon>
             <IconifyIconOffline icon="unarchive" />
@@ -193,7 +212,7 @@ onUnmounted(() => {
     <div v-loading="loading > 0" class="pr-2 app-container-breadcrumb">
       <div class="w-full">
         <template v-if="versions && versions.length > 0">
-          <el-row :gutter="15">
+          <el-row v-if="viewMode === 'card'" :gutter="15">
             <el-col
               v-for="version in versions"
               :key="version.githubAssetId"
@@ -288,6 +307,103 @@ onUnmounted(() => {
               </div>
             </el-col>
           </el-row>
+          <el-table
+            v-else
+            :data="versions"
+            border
+            class="download-list-table"
+            stripe
+          >
+            <el-table-column
+              :label="t('config.form.frpcVerson.label')"
+              min-width="180"
+              prop="name"
+              show-overflow-tooltip
+            >
+              <template #default="scope">
+                <span class="font-bold text-primary">{{ scope.row.name }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              :label="t('download.version.size')"
+              width="110"
+              prop="size"
+            />
+            <el-table-column
+              :label="t('download.version.downloadCount')"
+              width="120"
+              prop="versionDownloadCount"
+            />
+            <el-table-column
+              :label="t('download.version.publishTime')"
+              width="140"
+              prop="githubCreatedAt"
+            />
+            <el-table-column :label="t('common.status')" width="150">
+              <template #default="scope">
+                <el-progress
+                  v-if="isVersionDownloading(scope.row)"
+                  :percentage="getDownloadProgress(scope.row)"
+                  :text-inside="false"
+                />
+                <el-tag v-else-if="scope.row.downloaded" type="success">
+                  {{ t("download.version.downloaded") }}
+                </el-tag>
+                <el-tag v-else type="info">
+                  {{ t("download.version.notDownloaded") }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column
+              :label="t('common.operation')"
+              align="right"
+              fixed="right"
+              width="210"
+            >
+              <template #default="scope">
+                <div class="download-table-actions">
+                  <template v-if="scope.row.downloaded">
+                    <el-button
+                      link
+                      type="danger"
+                      size="small"
+                      @click="handleDeleteVersion(scope.row)"
+                    >
+                      <template #icon>
+                        <IconifyIconOffline icon="delete-rounded" />
+                      </template>
+                      {{ t("common.delete") }}
+                    </el-button>
+                  </template>
+                  <template v-else>
+                    <el-button
+                      v-if="!isVersionDownloading(scope.row)"
+                      link
+                      type="primary"
+                      size="small"
+                      @click="handleDownload(scope.row)"
+                    >
+                      <template #icon>
+                        <IconifyIconOffline icon="download" />
+                      </template>
+                      {{ t("download.version.download") }}
+                    </el-button>
+                    <el-button
+                      link
+                      type="primary"
+                      size="small"
+                      @click="handleCopyDownloadLink(scope.row)"
+                    >
+                      <template #icon>
+                        <IconifyIconOffline icon="link" />
+                      </template>
+                      {{ t("download.version.downloadLink") }}
+                    </el-button>
+                  </template>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
         </template>
         <div
           v-else
@@ -299,3 +415,17 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.download-table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  white-space: nowrap;
+
+  :deep(.el-button) {
+    margin-left: 0;
+  }
+}
+</style>

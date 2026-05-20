@@ -70,6 +70,10 @@ export default {
     button: {
       import: "Import"
     },
+    viewMode: {
+      card: "Card",
+      list: "List"
+    },
     message: {
       importSuccess: "Import successfully",
       deleteSuccess: "Delete successfully",
@@ -92,9 +96,11 @@ export default {
       }
     },
     version: {
+      size: "Size",
       downloadCount: "Download count:",
       publishTime: "Publish time:",
       downloaded: "Downloaded",
+      notDownloaded: "Not downloaded",
       delete: "Delete",
       download: "Download",
       downloadLink: "Download Link",
@@ -352,6 +358,10 @@ export default {
     visitorsName: "Visitors Name",
     noProxy: "No proxy",
     search: "Search by name / type / IP / port / domain",
+    viewMode: {
+      card: "Card",
+      list: "List"
+    },
     modifyTitle: "Modify Proxy",
     createTitle: "Create Proxy",
     dialog: {
@@ -521,6 +531,7 @@ export default {
     save: "Save",
     close: "Close",
     mode: "Mode",
+    status: "Status",
     frpParameter: "Frp Parameter",
     operation: "Operation",
     select: "Select",

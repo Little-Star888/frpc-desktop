@@ -29,6 +29,7 @@ const hostPattern =
 
 const proxys = ref<Array<FrpcProxy>>([]);
 const searchKeyword = ref("");
+const viewMode = ref<"card" | "list">("card");
 const filteredProxys = computed(() => {
   const kw = searchKeyword.value.trim().toLowerCase();
   if (!kw) return proxys.value;
@@ -329,6 +330,61 @@ const handleRangePort = () => {
     return true;
   }
   return false;
+};
+
+const isVisitorProxy = (proxy: FrpcProxy) => {
+  return (
+    (proxy.type === "stcp" || proxy.type === "xtcp" || proxy.type === "sudp") &&
+    proxy.visitorsModel === "visitors"
+  );
+};
+
+const shouldShowLocalAddress = (proxy: FrpcProxy) => {
+  return (
+    (proxy.type !== "stcp" && proxy.type !== "xtcp" && proxy.type !== "sudp") ||
+    proxy.visitorsModel !== "visitors"
+  );
+};
+
+const getProxyModeLabel = (proxy: FrpcProxy) => {
+  if (proxy.type !== "stcp" && proxy.type !== "xtcp" && proxy.type !== "sudp") {
+    return "";
+  }
+  return proxy.visitorsModel === "visitors"
+    ? t("proxy.visitors")
+    : t("proxy.visitorsProvider");
+};
+
+const getProxyLocalAddress = (proxy: FrpcProxy) => {
+  if (!shouldShowLocalAddress(proxy)) return "-";
+  return `${proxy.localIP}:${proxy.localPort}`;
+};
+
+const getProxyMappingAddress = (proxy: FrpcProxy) => {
+  if (proxy.type === "tcp" || proxy.type === "udp") {
+    return `${frpcConfig.value?.serverAddr ?? ""}:${proxy.remotePort}`;
+  }
+  if (
+    (proxy.type === "http" || proxy.type === "https") &&
+    proxy.customDomains &&
+    proxy.customDomains.length > 0 &&
+    proxy.customDomains[0]
+  ) {
+    return `${proxy.type === "http" ? "http://" : "https://"}${
+      proxy.customDomains[0]
+    }`;
+  }
+  if (isVisitorProxy(proxy)) {
+    return `${proxy.bindAddr}:${proxy.bindPort}`;
+  }
+  return "";
+};
+
+const handleCopyMappingAddress = (proxy: FrpcProxy) => {
+  const address = getProxyMappingAddress(proxy);
+  if (address) {
+    handleCopyString(address);
+  }
 };
 
 const handleSubmit = async () => {
@@ -680,13 +736,23 @@ onUnmounted(() => {
           <IconifyIconOffline icon="search" />
         </template>
       </el-input>
+      <el-radio-group v-model="viewMode" class="mr-2">
+        <el-radio-button value="card">
+          <IconifyIconOffline class="mr-1" icon="dashboard" />
+          {{ t("proxy.viewMode.card") }}
+        </el-radio-button>
+        <el-radio-button value="list">
+          <IconifyIconOffline class="mr-1" icon="table-rows" />
+          {{ t("proxy.viewMode.list") }}
+        </el-radio-button>
+      </el-radio-group>
       <el-button type="primary" @click="handleOpenInsert">
         <IconifyIconOffline icon="add" />
       </el-button>
     </breadcrumb>
     <div v-loading="loading.list > 0" class="app-container-breadcrumb">
       <template v-if="filteredProxys && filteredProxys.length > 0">
-        <el-row :gutter="15">
+        <el-row v-if="viewMode === 'card'" :gutter="15">
           <el-col
             v-for="proxy in filteredProxys"
             :key="proxy._id"
@@ -916,6 +982,133 @@ onUnmounted(() => {
             </div>
           </el-col>
         </el-row>
+        <el-table
+          v-else
+          :data="filteredProxys"
+          border
+          class="proxy-list-table"
+          stripe
+        >
+          <el-table-column
+            :label="t('proxy.form.formItem.name.label')"
+            min-width="150"
+            prop="name"
+            show-overflow-tooltip
+          >
+            <template #default="scope">
+              <span class="font-bold text-primary">{{ scope.row.name }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            :label="t('proxy.form.formItem.proxyType.label')"
+            width="110"
+          >
+            <template #default="scope">
+              <el-tag size="small">{{ scope.row.type }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('common.mode')" width="120">
+            <template #default="scope">
+              <span>{{ getProxyModeLabel(scope.row) || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('proxy.inner')" min-width="170">
+            <template #default="scope">
+              <span>{{ getProxyLocalAddress(scope.row) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('proxy.mappingAddress')" min-width="220">
+            <template #default="scope">
+              <el-button
+                v-if="getProxyMappingAddress(scope.row)"
+                link
+                type="primary"
+                @click="handleCopyMappingAddress(scope.row)"
+              >
+                {{ getProxyMappingAddress(scope.row) }}
+              </el-button>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            :label="t('proxy.form.formItem.remotePort.label')"
+            width="120"
+            prop="remotePort"
+            show-overflow-tooltip
+          >
+            <template #default="scope">
+              <span>{{ scope.row.remotePort || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('common.status')" width="100">
+            <template #default="scope">
+              <el-tag
+                :type="scope.row.status === 0 ? 'danger' : 'success'"
+                size="small"
+              >
+                {{
+                  scope.row.status === 0
+                    ? t("common.disabled")
+                    : t("common.enabled")
+                }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            :label="t('common.operation')"
+            align="right"
+            fixed="right"
+            width="190"
+          >
+            <template #default="scope">
+              <div class="proxy-table-actions">
+                <el-button
+                  link
+                  type="primary"
+                  size="small"
+                  @click="handleOpenUpdate(scope.row)"
+                >
+                  <template #icon>
+                    <IconifyIconOffline icon="edit" />
+                  </template>
+                  {{ t("common.modify") }}
+                </el-button>
+                <el-dropdown>
+                  <el-button link type="primary" size="small">
+                    <template #icon>
+                      <IconifyIconOffline icon="more-horiz" />
+                    </template>
+                    {{ t("common.more") }}
+                  </el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item
+                        @click="handleReversalUpdate(scope.row)"
+                      >
+                        <IconifyIconOffline
+                          class="mr-1"
+                          :icon="!scope.row.status ? 'toggle-on' : 'toggle-off'"
+                        />
+                        {{
+                          scope.row.status
+                            ? t("common.disable")
+                            : t("common.enable")
+                        }}
+                      </el-dropdown-item>
+                      <el-dropdown-item @click="handleDeleteProxy(scope.row)">
+                        <IconifyIconOffline
+                          class="mr-1"
+                          icon="delete-rounded"
+                        />
+                        {{ t("common.delete") }}
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
       </template>
       <div
         v-else
@@ -2006,5 +2199,17 @@ onUnmounted(() => {
 
 .button-input {
   width: calc(100% - 68px);
+}
+
+.proxy-table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  white-space: nowrap;
+
+  :deep(.el-button) {
+    margin-left: 0;
+  }
 }
 </style>

@@ -67,6 +67,10 @@ export default {
     button: {
       import: "导入"
     },
+    viewMode: {
+      card: "卡片",
+      list: "列表"
+    },
     message: {
       importSuccess: "导入成功",
       deleteSuccess: "删除成功",
@@ -88,9 +92,11 @@ export default {
       }
     },
     version: {
+      size: "大小",
       downloadCount: "下载数：",
       publishTime: "发布时间：",
       downloaded: "已下载",
+      notDownloaded: "未下载",
       download: "下载",
       downloadLink: "下载链接",
       noVersions: "暂无可用版本"
@@ -355,6 +361,7 @@ export default {
     close: "关闭",
     save: "保存",
     mode: "模式",
+    status: "状态",
     selectMode: "请选择{mode}模式",
     operation: "操作",
     select: "选择",
@@ -370,6 +377,10 @@ export default {
     visitorsName: "访问者名称",
     noProxy: "暂无代理",
     search: "搜索名称/类型/IP/端口/域名",
+    viewMode: {
+      card: "卡片",
+      list: "列表"
+    },
     modifyTitle: "编辑代理",
     createTitle: "添加代理",
     message: {
