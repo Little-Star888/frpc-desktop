@@ -70,6 +70,9 @@ export default {
     button: {
       import: "Import"
     },
+    mirror: {
+      placeholder: "Download proxy"
+    },
     viewMode: {
       card: "Card",
       list: "List"

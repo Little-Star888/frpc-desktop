@@ -15,6 +15,10 @@ import GitHubService from "./GitHubService";
 import SystemService from "./SystemService";
 
 class VersionService extends BaseService<FrpcVersion> {
+  private static readonly GITHUB_DOWNLOAD_MIRRORS: Record<string, string> = {
+    "gh-jwinks": "https://gh.jwinks.com/file/"
+  };
+
   private readonly _versionDao: VersionRepository;
   private readonly _systemService: SystemService;
   private readonly _gitHubService: GitHubService;
@@ -34,7 +38,11 @@ class VersionService extends BaseService<FrpcVersion> {
     this._currFrpArch = GlobalConstant.FRP_ARCH_VERSION_MAPPING[nodeVersion];
   }
 
-  async downloadFrpVersion(githubReleaseId: number, onProgress: Function) {
+  async downloadFrpVersion(
+    githubReleaseId: number,
+    onProgress: Function,
+    mirrorId?: string
+  ) {
     return new Promise(async (resolve, reject) => {
       const version = this._versions.find(
         f => f.githubReleaseId === githubReleaseId
@@ -43,7 +51,7 @@ class VersionService extends BaseService<FrpcVersion> {
         reject(new Error("version not found"));
         return;
       }
-      const url = version.browserDownloadUrl;
+      const url = this.getDownloadUrl(version.browserDownloadUrl, mirrorId);
       const downloadedFilePath = path.join(
         PathUtils.getDownloadStoragePath(),
         `${version.assetName}`
@@ -133,6 +141,17 @@ class VersionService extends BaseService<FrpcVersion> {
   }
 
   getFrpVersion() {}
+
+  private getDownloadUrl(originalUrl: string, mirrorId?: string) {
+    if (!mirrorId || mirrorId === "github") {
+      return originalUrl;
+    }
+    const mirrorPrefix = VersionService.GITHUB_DOWNLOAD_MIRRORS[mirrorId];
+    if (!mirrorPrefix) {
+      return originalUrl;
+    }
+    return `${mirrorPrefix}${originalUrl}`;
+  }
 
   private findCurrentArchitectureAsset(assets: Array<GithubAsset>) {
     return assets.find((af: GithubAsset) => {

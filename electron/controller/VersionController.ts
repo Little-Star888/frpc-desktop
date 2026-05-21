@@ -44,16 +44,20 @@ class VersionController extends BaseController {
 
   downloadFrpVersion(req: ControllerParam) {
     this._versionService
-      .downloadFrpVersion(req.args.githubReleaseId, progress => {
-        req.event.reply(
-          req.channel,
-          ResponseUtils.success({
-            percent: progress.percent,
-            githubReleaseId: req.args.githubReleaseId,
-            completed: progress.percent >= 1
-          })
-        );
-      })
+      .downloadFrpVersion(
+        req.args.githubReleaseId,
+        progress => {
+          req.event.reply(
+            req.channel,
+            ResponseUtils.success({
+              percent: progress.percent,
+              githubReleaseId: req.args.githubReleaseId,
+              completed: progress.percent >= 1
+            })
+          );
+        },
+        req.args.mirrorId
+      )
       .then(r => {
         req.event.reply(
           req.channel,

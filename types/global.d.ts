@@ -100,6 +100,7 @@ declare global {
   type GitHubMirror = {
     id: string;
     name: string;
+    prefix?: string;
   };
 }
 export {};

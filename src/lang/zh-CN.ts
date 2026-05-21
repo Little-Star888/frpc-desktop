@@ -67,6 +67,9 @@ export default {
     button: {
       import: "导入"
     },
+    mirror: {
+      placeholder: "下载代理"
+    },
     viewMode: {
       card: "卡片",
       list: "列表"

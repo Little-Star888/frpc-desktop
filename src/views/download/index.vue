@@ -21,14 +21,27 @@ const loading = ref(1);
 const downloadPercentage = ref(0);
 const downloading = ref<Map<number, number>>(new Map<number, number>());
 const viewMode = ref<"card" | "list">("card");
-const currMirror = ref("github");
+const currMirror = ref("gh-jwinks");
 const mirrors = ref<Array<GitHubMirror>>([
   {
     id: "github",
-    name: "github"
+    name: "GitHub"
+  },
+  {
+    id: "gh-jwinks",
+    name: "Jwinks",
+    prefix: "https://gh.jwinks.com/file/"
   }
 ]);
 const frpcDesktopStore = useFrpcDesktopStore();
+
+const getDownloadUrl = (version: FrpcVersion) => {
+  const mirror = mirrors.value.find(item => item.id === currMirror.value);
+  if (!mirror?.prefix) {
+    return version.browserDownloadUrl;
+  }
+  return `${mirror.prefix}${version.browserDownloadUrl}`;
+};
 
 /**
  * 获取版本
@@ -43,14 +56,15 @@ const handleLoadAllVersions = () => {
  */
 const handleDownload = useDebounceFn((version: FrpcVersion) => {
   send(ipcRouters.VERSION.downloadVersion, {
-    githubReleaseId: version.githubReleaseId
+    githubReleaseId: version.githubReleaseId,
+    mirrorId: currMirror.value
   });
   downloading.value.set(version.githubReleaseId, 0);
 }, 300);
 
 const handleCopyDownloadLink = useDebounceFn((version: FrpcVersion) => {
   const { copy, copied } = useClipboard();
-  copy(version.browserDownloadUrl);
+  copy(getDownloadUrl(version));
   ElMessage({
     type: "success",
     message: t("download.message.copyDownloadLinkSuccess")
@@ -77,10 +91,6 @@ const handleDeleteVersion = useDebounceFn((version: FrpcVersion) => {
     });
   });
 }, 300);
-
-const handleMirrorChange = () => {
-  handleLoadAllVersions();
-};
 
 const isVersionDownloading = (version: FrpcVersion) => {
   return downloading.value.has(version.githubReleaseId);
@@ -190,7 +200,22 @@ onUnmounted(() => {
 <template>
   <div class="main">
     <breadcrumb>
-      <div class="flex items-center">
+      <div class="flex flex-wrap gap-2 items-center justify-end">
+        <el-select
+          v-model="currMirror"
+          class="download-mirror-select"
+          :placeholder="t('download.mirror.placeholder')"
+        >
+          <template #prefix>
+            <IconifyIconOffline icon="download" />
+          </template>
+          <el-option
+            v-for="mirror in mirrors"
+            :key="mirror.id"
+            :label="mirror.name"
+            :value="mirror.id"
+          />
+        </el-select>
         <el-radio-group v-model="viewMode" class="mr-2">
           <el-radio-button value="card">
             <IconifyIconOffline class="mr-1" icon="dashboard" />
@@ -427,5 +452,9 @@ onUnmounted(() => {
   :deep(.el-button) {
     margin-left: 0;
   }
+}
+
+.download-mirror-select {
+  width: 160px;
 }
 </style>
