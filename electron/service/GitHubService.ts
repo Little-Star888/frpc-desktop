@@ -11,7 +11,7 @@ class GitHubService {
     return new Promise((resolve, reject) => {
       const request = net.request({
         method: "get",
-        url: `https://ghp.podux.io/repos/${githubRepo}/releases?page=1&per_page=1000`
+        url: `https://gh.jwinks.com/api/repos/${githubRepo}/releases?page=1&per_page=1000`
       });
       request.setHeader("User-Agent", this.userAgent);
 
@@ -59,7 +59,7 @@ class GitHubService {
     return new Promise((resolve, reject) => {
       const request = net.request({
         method: "get",
-        url: `https://ghp.podux.io/repos/${githubRepo}/releases/latest`
+        url: `https://gh.jwinks.com/api/repos/${githubRepo}/releases/latest`
       });
       request.setHeader("User-Agent", this.userAgent);
       request.on("response", response => {

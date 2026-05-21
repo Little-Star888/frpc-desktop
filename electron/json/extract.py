@@ -54,7 +54,7 @@ def fetch_txt_content(url):
 
 def download_frp_releases():
     logging.info("Starting to download frp-releases.json")
-    url = "https://ghp.podux.io/repos/fatedier/frp/releases?page=1&per_page=1000"
+    url = "https://gh.jwinks.com/api/repos/fatedier/frp/releases?page=1&per_page=1000"
 
     try:
         response = requests.get(url)
